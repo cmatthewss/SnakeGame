@@ -29,6 +29,7 @@ class Snake:
 
     KEYS = ["w", "a", "s", "d"]
     MAP_KEY_OPP = {"w": "s", "a": "d", "s": "w", "d": "a"}
+    number_of_clicks = 0
 
     def __init__(self, apple):
         # the apple now is a list of Apple instance
@@ -50,15 +51,19 @@ class Snake:
 
         if self.__key_current == "w":
             self.__y[0] = self.__y[0] - 1
+            self.number_of_clicks += 1
 
         elif self.__key_current == "s":
             self.__y[0] = self.__y[0] + 1
+            self.number_of_clicks += 1
 
         elif self.__key_current == "a":
             self.__x[0] = self.__x[0] - 1
+            self.number_of_clicks += 1
 
         elif self.__key_current == "d":
             self.__x[0] = self.__x[0] + 1
+            self.number_of_clicks += 1
 
         self.eat_apple()
 
@@ -167,48 +172,56 @@ class inputWindow(Toplevel):
         self.destroy()
 
 class inputHighScoreWindow(object):
-    def __init__(self, master, snake, entering_name, high_scores):
+    def __init__(self, master, set_current_user, pause_function):
         top = self.top=Toplevel(master)
         self.label = Label(top, text="Enter name for high score:")
         self.button = Button(top, text="Enter", command=self.enter_name)
         self.enter_window = Entry(top)
-        self.snake = snake
-        self.entering_name = entering_name
-        self.high_scores = high_scores
+        self.set_current_user = set_current_user
+        self.pause_function = pause_function
 
         self.label.pack()
         self.enter_window.pack()
         self.button.pack()
 
     def enter_name(self):
+        id = int(time.time())
         name = self.enter_window.get()
-        score = self.snake.length - 3
-        snake_length = self.snake.length
-        self.high_scores.append([name, score, snake_length])
-        print(self.high_scores)
+        self.set_current_user(id, name)
+        self.pause_function()
         self.top.destroy()
 
 
 class App(Tk):
-    game_over_shown = False
     BOARD_WIDTH = 30
     BOARD_HEIGHT = 30
     TILE_SIZE = 10
 
+    enter_name_shown = False
+    add_to_leaderboard_shown = False
     high_scores = []
     entering_name = False
+    id_number = 0
+    name = "None"
+    time_paused = 0
+    pause_time = 0
+    total_game_time = 0
+
 
     COLOR_BACKGROUND = "white"
     COLOR_SNAKE_HEAD = "green"
     COLOR_SNAKE_BODY = "blue"
     COLOR_APPLE = "red"
     COLOR_FONT = "darkblue"
-    FONT = "Times 20 italic bold"
+    FONT = "Times 14 bold"
     FONT_DISTANCE = 25
 
     TEXT_TITLE = "Snake"
     TEXT_GAMEOVER = "Game Over!"
+    TEXT_NAME = "Name: "
     TEXT_POINTS = "Points: "
+    TEXT_TIME_ELAPSED = "Time elapsed: "
+    TEXT_SNAKE_LENGTH = "Snake length: "
 
     TICK_RATE = 200  # in ms
 
@@ -279,13 +292,18 @@ class App(Tk):
         self.after(App.TICK_RATE, self.__gameloop)
         self.__canvas.delete(ALL)
         self.__pause = self.pause
-        
+
         if not self.__snake.gameover:
+            if not self.enter_name_shown:
+                self.start_time = time.time()
+                self.setPause()
+                self.enter_name_shown = True
+                self.enter_high_score(self.set_current_user, self.setPause)
+
             # show the 'PAUSE' if stopping the game
             if self.__pause and not self.__starting:
                 x, y = self.get_screen_center()
-                self.__canvas.create_text(x, y, fill=App.COLOR_FONT, font=App.FONT,
-                                    text='PAUSE')
+                self.__canvas.create_text(x, y, fill=App.COLOR_FONT, font=App.FONT, text='PAUSE')
             
             # countdown when restarting the game
             if self.__starting:
@@ -331,15 +349,30 @@ class App(Tk):
                 )  # Apple
 
         else:  # GameOver Message
-            if not self.game_over_shown:
-                self.game_over_shown = True
-                self.enter_high_score()
+            if not self.add_to_leaderboard_shown:
+                self.add_to_leaderboard_shown = True
+                self.total_game_time = time.time() - self.id_number
+                self.total_game_time -= self.pause_time
+
+                if self.name != "None":
+                    self.high_scores.append([self.id_number, self.name, self.__snake.points, self.__snake.length,
+                                             self.total_game_time])
 
             x, y = self.get_screen_center()
-
             self.__canvas.create_text(x, y - App.FONT_DISTANCE, fill=App.COLOR_FONT, font=App.FONT,
                                     text=App.TEXT_GAMEOVER)
-            self.__canvas.create_text(x, y + App.FONT_DISTANCE, fill=App.COLOR_FONT, font=App.FONT,
+
+            if self.name != "None":
+                self.__canvas.create_text(x, y + App.FONT_DISTANCE*2, fill=App.COLOR_FONT, font=App.FONT,
+                                          text=App.TEXT_NAME + str(self.name))
+
+                self.__canvas.create_text(x, y + App.FONT_DISTANCE*3, fill=App.COLOR_FONT, font=App.FONT,
+                                          text=App.TEXT_SNAKE_LENGTH + str(self.__snake.length))
+
+                self.__canvas.create_text(x, y + App.FONT_DISTANCE * 4, fill=App.COLOR_FONT, font=App.FONT,
+                                          text=App.TEXT_TIME_ELAPSED + str(abs(int(self.total_game_time))) + "s")
+
+            self.__canvas.create_text(x, y + App.FONT_DISTANCE*5, fill=App.COLOR_FONT, font=App.FONT,
                                     text=App.TEXT_POINTS + str(self.__snake.points))
 
     # get the screen center for showing message
@@ -348,22 +381,27 @@ class App(Tk):
         y = App.BOARD_HEIGHT * App.TILE_SIZE / 2  # y coordinate of screen center
         return x, y
 
-    def enter_high_score(self):
+    def enter_high_score(self, set_name_function, pause_function):
         self.entering_name = True
-        name = "None"
-        enter_name_window = inputHighScoreWindow(self.master, self.__snake, self.entering_name, self.high_scores)
+        enter_name_window = inputHighScoreWindow(self.master, set_name_function, pause_function)
 
     # get the state of pause
     @property
     def pause(self) -> bool:
         return self.__pause
+
+    def set_current_user(self, id, name):
+        self.id_number = id
+        self.name = name
     
     # stop or restart the game
     def setPause(self):
         if self.__pause:
             self.__starting = True
+            self.pause_time += int(time.time() - self.time_paused)
         else:
-            self.__pause =  not self.__pause
+            self.time_paused = time.time()
+            self.__pause = not self.__pause
     
     # show countdown message
     def countdown(self):
@@ -385,8 +423,10 @@ class App(Tk):
         # start the game
         self.__pause = True
         self.__starting = True
-        self.game_over_shown = False
+        self.enter_name_shown = False
+        self.add_to_leaderboard_shown = False
         self.entering_name = False
+        self.pause_time = 0
     
     # set the window size
     def setWindowSize(self):
@@ -428,7 +468,6 @@ class App(Tk):
 
         # get input
         App.number_apple = int(window.output['number of apples'])
-
 
         if App.number_apple > before:
             # create new Apple instance

@@ -166,22 +166,48 @@ class inputWindow(Toplevel):
         self.output.update(self.table.todict())
         self.destroy()
 
-class App(Tk):
+class inputHighScoreWindow(object):
+    def __init__(self, master, snake, entering_name, high_scores):
+        top = self.top=Toplevel(master)
+        self.label = Label(top, text="Enter name for high score:")
+        self.button = Button(top, text="Enter", command=self.enter_name)
+        self.enter_window = Entry(top)
+        self.snake = snake
+        self.entering_name = entering_name
+        self.high_scores = high_scores
 
+        self.label.pack()
+        self.enter_window.pack()
+        self.button.pack()
+
+    def enter_name(self):
+        name = self.enter_window.get()
+        score = self.snake.length - 3
+        snake_length = self.snake.length
+        self.high_scores.append([name, score, snake_length])
+        print(self.high_scores)
+        self.top.destroy()
+
+
+class App(Tk):
+    game_over_shown = False
     BOARD_WIDTH = 30
     BOARD_HEIGHT = 30
     TILE_SIZE = 10
 
-    COLOR_BACKGROUND = "yellow"
-    COLOR_SNAKE_HEAD = "red"
+    high_scores = []
+    entering_name = False
+
+    COLOR_BACKGROUND = "white"
+    COLOR_SNAKE_HEAD = "green"
     COLOR_SNAKE_BODY = "blue"
-    COLOR_APPLE = "green"
+    COLOR_APPLE = "red"
     COLOR_FONT = "darkblue"
     FONT = "Times 20 italic bold"
     FONT_DISTANCE = 25
 
     TEXT_TITLE = "Snake"
-    TEXT_GAMEOVER = "GameOver!"
+    TEXT_GAMEOVER = "Game Over!"
     TEXT_POINTS = "Points: "
 
     TICK_RATE = 200  # in ms
@@ -223,21 +249,21 @@ class App(Tk):
         mebubar = Menu(self)
         # menu 1: HOME
         menu1 = Menu(self, tearoff=0)
-        menu1.add_command(label="accounts")
+        menu1.add_command(label="Accounts")
         menu1.add_separator()
-        menu1.add_command(label="performance")
+        menu1.add_command(label="Performance")
         menu1.add_separator()
-        menu1.add_command(label="restart", command=self.setRestart)
+        menu1.add_command(label="Restart", command=self.setRestart)
         menu1.add_separator()
-        menu1.add_command(label="return")
+        menu1.add_command(label="Return")
         #
         mebubar.add_cascade(label="HOME", menu=menu1)
         #
         # menu 2: SETTING
         menu2 = Menu(self, tearoff=0)
-        menu2.add_command(label="windows size", command=self.setWindowSize)
+        menu2.add_command(label="Windows Size", command=self.setWindowSize)
         menu2.add_separator()
-        menu2.add_command(label="number of apples", command=self.setAppleNumber)
+        menu2.add_command(label="Number of Apples", command=self.setAppleNumber)
         #
         mebubar.add_cascade(label="SETTING", menu=menu2)
         #
@@ -255,7 +281,7 @@ class App(Tk):
         self.__pause = self.pause
         
         if not self.__snake.gameover:
-            # show the 'PAUSE' if stoping the game
+            # show the 'PAUSE' if stopping the game
             if self.__pause and not self.__starting:
                 x, y = self.get_screen_center()
                 self.__canvas.create_text(x, y, fill=App.COLOR_FONT, font=App.FONT,
@@ -305,17 +331,27 @@ class App(Tk):
                 )  # Apple
 
         else:  # GameOver Message
+            if not self.game_over_shown:
+                self.game_over_shown = True
+                self.enter_high_score()
+
             x, y = self.get_screen_center()
+
             self.__canvas.create_text(x, y - App.FONT_DISTANCE, fill=App.COLOR_FONT, font=App.FONT,
                                     text=App.TEXT_GAMEOVER)
             self.__canvas.create_text(x, y + App.FONT_DISTANCE, fill=App.COLOR_FONT, font=App.FONT,
                                     text=App.TEXT_POINTS + str(self.__snake.points))
-    
+
     # get the screen center for showing message
     def get_screen_center(self):
         x = App.BOARD_WIDTH * App.TILE_SIZE / 2  # x coordinate of screen center
         y = App.BOARD_HEIGHT * App.TILE_SIZE / 2  # y coordinate of screen center
         return x, y
+
+    def enter_high_score(self):
+        self.entering_name = True
+        name = "None"
+        enter_name_window = inputHighScoreWindow(self.master, self.__snake, self.entering_name, self.high_scores)
 
     # get the state of pause
     @property
@@ -332,13 +368,12 @@ class App(Tk):
     # show countdown message
     def countdown(self):
         x, y = self.get_screen_center()
-        self.__canvas.create_text(x, y, fill=App.COLOR_FONT, font=App.FONT,
-                                text=str(self.__count_time))
+        self.__canvas.create_text(x, y, fill=App.COLOR_FONT, font=App.FONT, text=str(self.__count_time))
         self.__count_time -= 1
-        if self.__count_time <=0:
+        if self.__count_time <= 0:
             self.__starting = False
             self.__count_time = 3
-            self.__pause =  False
+            self.__pause = False
 
     # restart the game
     def setRestart(self):
@@ -350,6 +385,8 @@ class App(Tk):
         # start the game
         self.__pause = True
         self.__starting = True
+        self.game_over_shown = False
+        self.entering_name = False
     
     # set the window size
     def setWindowSize(self):
@@ -361,7 +398,7 @@ class App(Tk):
         window = inputWindow(self,label={'width':App.BOARD_WIDTH,\
                                             'height':App.BOARD_HEIGHT,
                                             'tile':App.TILE_SIZE})
-        window.title('please input the window size')
+        window.title('Please input the window size')
         window.transient(self)
         self.wait_window(window)
 
@@ -380,12 +417,12 @@ class App(Tk):
         if not self.__pause:
             self.setPause()
 
-        # previour number of apples
+        # previous number of apples
         before = App.number_apple
         
-        # create a new window for inputing apples number
-        window = inputWindow(self,label={'number of apples':App.number_apple})
-        window.title('please input the number of apples')
+        # create a new window for inputting apples number
+        window = inputWindow(self,label={'Number of Apples':App.number_apple})
+        window.title('Please input the number of apples')
         window.transient(self)
         self.wait_window(window)
 
@@ -404,12 +441,13 @@ class App(Tk):
 
     # shortcut event
     def shortcut(self, event):
-        if (event.char == 'p') | (event.char == 'P'):
-            self.setPause()
-        if (event.char == 'o') | (event.char == 'O'):
-            self.setWindowSize()
-        if (event.char == 'n') | (event.char == 'N'):
-            self.setAppleNumber()
+        if not self.entering_name:
+            if (event.char == 'p') | (event.char == 'P'):
+                self.setPause()
+            if (event.char == 'o') | (event.char == 'O'):
+                self.setWindowSize()
+            if (event.char == 'n') | (event.char == 'N'):
+                self.setAppleNumber()
 
 
 if __name__ == "__main__":

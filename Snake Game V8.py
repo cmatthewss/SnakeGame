@@ -471,7 +471,7 @@ class App(Tk):
                 self.setAppleNumber()
 
 
-def singleplayerwindow():
+def Play2():
     App().mainloop()
 
 
@@ -503,9 +503,9 @@ root.geometry('500x325')
 
 
 
-leaderboard_button = tk.Button(root, bg = 'forestgreen', text='Leaderboard', command=leaderboard, width=25, font= ('Arial', 48))
+leaderboard_button = tk.Button(root, bg = 'forestgreen', text='Leaderboard', command=leaderboard, width=25, font= (App.FONT, 48))
 leaderboard_button.pack(side='bottom')
-start_button = tk.Button(root, bg = 'yellowgreen', text='Single Player', width=25, command=singleplayerwindow, font=('Arial', 48))
+start_button = tk.Button(root, bg = 'yellowgreen', text='Single Player', width=25, command=Play2, font=(App.FONT, 48))
 start_button.pack(side='bottom')
 
 class inputHighScoreWindow(object):

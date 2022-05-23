@@ -6,6 +6,7 @@ from tkinter import *
 import random
 from typing import List
 
+high_scores = []
 
 class Apple:
 
@@ -181,13 +182,11 @@ class App(Tk):
 
     enter_name_shown = False
     add_to_leaderboard_shown = False
-    high_scores = []
     entering_name = False
     id_number = 0
     name = "None"
-    time_paused = 0
-    pause_time = 0
     total_game_time = 0
+    first_run_of_game = True
 
 
     COLOR_BACKGROUND = "white"
@@ -233,10 +232,8 @@ class App(Tk):
         # the countdown time
         self.__count_time = 3
 
-        self.start_button = Button(self, text="Start / Pause", command=self.setPause )
+        self.start_button = Button(self, text="Start / Pause", command=self.setPause)
         self.start_button.pack(side='bottom')
-
-
 
     def mainloop(self, n=0):
         # menu
@@ -250,6 +247,7 @@ class App(Tk):
         # menu 1: HOME
         menu1 = Menu(self, tearoff=0)
         menu1.add_command(label="Restart", command=self.setRestart)
+
 
         #
         mebubar.add_cascade(label="HOME", menu=menu1)
@@ -273,17 +271,20 @@ class App(Tk):
 
         x, y = self.get_screen_center()
         self.__canvas.create_text(50, 10, fill=App.COLOR_FONT, font=App.FONT,
-                                          text=self.name)
+                                  text=self.name)
 
         if not self.__snake.gameover:
             # show the 'PAUSE' if stopping the game
             if self.__pause and not self.__starting:
                 x, y = self.get_screen_center()
                 self.__canvas.create_text(x, y, fill=App.COLOR_FONT, font=App.FONT, text='PAUSE')
-            
+
             if not self.enter_name_shown:
+                if self.first_run_of_game:
+                    self.setPause()
+                    self.first_run_of_game = False
                 self.start_time = time.time()
-                self.setPause()
+                self.first_run_of_game = False
                 self.enter_name_shown = True
                 self.enter_high_score(self.set_current_user, self.setPause)
 
@@ -329,16 +330,14 @@ class App(Tk):
                     self.__apple[ii].y * App.TILE_SIZE + App.TILE_SIZE,
                     fill=App.COLOR_APPLE
                 )  # Apple
-
         else:  # GameOver Message
             if not self.add_to_leaderboard_shown:
                 self.add_to_leaderboard_shown = True
-                self.total_game_time = time.time() - self.id_number
-                self.total_game_time -= self.pause_time
+                self.total_game_time = time.time() - self.start_time
 
                 if self.name != "None":
-                    self.high_scores.append([self.id_number, self.name, self.__snake.points, self.__snake.length,
-                                             self.total_game_time])
+                    high_scores.append([self.id_number, self.name, self.__snake.points, self.__snake.length,
+                                        self.total_game_time])
 
             x, y = self.get_screen_center()
             self.__canvas.create_text(x, y - App.FONT_DISTANCE, fill=App.COLOR_FONT, font=App.FONT,
@@ -380,10 +379,8 @@ class App(Tk):
     def setPause(self):
         if self.__pause:
             self.__starting = True
-            self.pause_time += int(time.time() - self.time_paused)
         else:
-            self.time_paused = time.time()
-            self.__pause = not self.__pause
+            self.__pause = True
     
     # show countdown message
     def countdown(self):
@@ -404,12 +401,12 @@ class App(Tk):
         
         # start the game
         self.__pause = True
-        self.__starting = True
+        self.__starting = False
         self.enter_name_shown = False
         self.add_to_leaderboard_shown = False
         self.entering_name = False
-        self.pause_time = 0
-    
+        self.id_number = ""
+
     # set the window size
     def setWindowSize(self):
         # stop the game
@@ -475,25 +472,34 @@ def singleplayerwindow():
     App().mainloop()
 
 
-
-
-
 def leaderboard():
     tk.Button.destroy(start_button)
     tk.Button.destroy(leaderboard_button)
     root.configure(background=App.COLOR_BACKGROUND)
     root.title("Leaderboard")
-    label = tk.Label(root, text=(App.TEXT_NAME + str(App.name)) , font=App.FONT, fg=App.COLOR_FONT)
+    label_leaderboard = tk.Label(root, text="Leaderboard", font=App.FONT, fg=App.COLOR_FONT)
+    label_leaderboard.pack()
+    label = tk.Label(root, text="Place:   Name   Apples", font=App.FONT, fg=App.COLOR_FONT)
     label.pack()
+    sorted_list = list(reversed(sorted(high_scores, key=lambda entry: entry[2])))
+
+    for i in range(min(len(sorted_list), 10)):
+        entry = sorted_list[i]
+        entry_text = f"{i+1}:\t {entry[1]}\t {entry[2]}"
+        label = tk.Label(root, text=entry_text, font=App.FONT, fg=App.COLOR_FONT)
+        label.pack()
+
+
+
 
 
 
 
 root =Tk()
 root.title("Snake Main Menu")
-root.geometry('1000x650')
-img=PhotoImage(file='C:/Users/alexr/OneDrive - Loughborough University/Year 2/WSB301 - Software/Snake/background1.gif')
-Label(root,image=img).pack()
+root.geometry('500x325')
+#img=PhotoImage(file='C:/Users/alexr/OneDrive - Loughborough University/Year 2/WSB301 - Software/Snake/background1.gif')
+#Label(root,image=img).pack()
 
 
 
@@ -504,7 +510,9 @@ start_button.pack(side='bottom')
 
 class inputHighScoreWindow(object):
     def __init__(self, master, set_current_user, pause_function):
-        top = self.top=Toplevel(master)
+        top = self.top = Toplevel(master)
+        top.geometry("350x150+320+280")
+        top.title("Enter name to start")
         self.label = Label(top, text="Enter name for high score:")
         self.button = Button(top, text="Enter", command=self.enter_name)
         self.enter_window = Entry(top)

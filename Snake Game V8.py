@@ -6,6 +6,7 @@ from tkinter import *
 import random
 from typing import List
 
+#making list of highscores
 high_scores = []
 
 class Apple:
@@ -31,7 +32,6 @@ class Snake:
 
     KEYS = ["w", "a", "s", "d"]
     MAP_KEY_OPP = {"w": "s", "a": "d", "s": "w", "d": "a"}
-    number_of_clicks = 0
 
     def __init__(self, apple):
         # the apple now is a list of Apple instance
@@ -53,19 +53,15 @@ class Snake:
 
         if self.__key_current == "w":
             self.__y[0] = self.__y[0] - 1
-            self.number_of_clicks += 1
 
         elif self.__key_current == "s":
             self.__y[0] = self.__y[0] + 1
-            self.number_of_clicks += 1
 
         elif self.__key_current == "a":
             self.__x[0] = self.__x[0] - 1
-            self.number_of_clicks += 1
 
         elif self.__key_current == "d":
             self.__x[0] = self.__x[0] + 1
-            self.number_of_clicks += 1
 
         self.eat_apple()
 
@@ -180,13 +176,18 @@ class App(Tk):
     BOARD_HEIGHT = 30
     TILE_SIZE = 10
 
+    # toggle to show name entering and add to leaderboard
     enter_name_shown = False
     add_to_leaderboard_shown = False
+    first_run_of_game = True
+
+    # disable shortcuts while typing name
     entering_name = False
+
+    # keep track of stats in game
     id_number = 0
     name = "None"
     total_game_time = 0
-    first_run_of_game = True
 
 
     COLOR_BACKGROUND = "white"
@@ -225,9 +226,9 @@ class App(Tk):
         # activate shortcut
         self.bind_all('<KeyPress>', self.shortcut)
 
-        # wheter pause the game
+        # whether pause the game
         self.__pause = False
-        # wheter end pause and countdown
+        # whether end pause and countdown
         self.__starting = False
         # the countdown time
         self.__count_time = 3
@@ -243,26 +244,23 @@ class App(Tk):
         Tk.mainloop(self, n)
     
     def __menu(self):
-        mebubar = Menu(self)
+        menubar = Menu(self)
         # menu 1: HOME
         menu1 = Menu(self, tearoff=0)
         menu1.add_command(label="Restart", command=self.setRestart)
+        menubar.add_cascade(label="HOME", menu=menu1)
 
-
-        #
-        mebubar.add_cascade(label="HOME", menu=menu1)
-        #
         # menu 2: SETTING
         menu2 = Menu(self, tearoff=0)
         menu2.add_command(label="Windows Size", command=self.setWindowSize)
         menu2.add_separator()
         menu2.add_command(label="Number of Apples", command=self.setAppleNumber)
-        #
-        mebubar.add_cascade(label="SETTING", menu=menu2)
+
+        menubar.add_cascade(label="SETTING", menu=menu2)
         
-        # menu5 close the game
-        mebubar.add_command(label="CLOSE", command=self.quit)
-        self.config(menu=mebubar)
+        # menu 5: close the game
+        menubar.add_command(label="CLOSE", command=self.quit)
+        self.config(menu=menubar)
 
     def __gameloop(self):
         self.after(App.TICK_RATE, self.__gameloop)
@@ -279,6 +277,7 @@ class App(Tk):
                 x, y = self.get_screen_center()
                 self.__canvas.create_text(x, y, fill=App.COLOR_FONT, font=App.FONT, text='PAUSE')
 
+            # toggle for input name window
             if not self.enter_name_shown:
                 if self.first_run_of_game:
                     self.setPause()
@@ -297,21 +296,23 @@ class App(Tk):
                 # return to normal game speed
                 App.TICK_RATE = 200
             
-            # if the game is not stopped, the snack moves
+            # if the game is not stopped, the snake moves
             if not self.__pause:
                 self.__snake.move()
 
             x = self.__snake.x
             y = self.__snake.y
 
+            # create snake head
             self.__canvas.create_rectangle(
                 x[0] * App.TILE_SIZE,
                 y[0] * App.TILE_SIZE,
                 x[0] * App.TILE_SIZE + App.TILE_SIZE,
                 y[0] * App.TILE_SIZE + App.TILE_SIZE,
                 fill=App.COLOR_SNAKE_HEAD
-            )  # Head
+            )
 
+            # create snake body
             for i in range(1, self.__snake.length, 1):
                 self.__canvas.create_rectangle(
                     x[i] * App.TILE_SIZE,
@@ -319,9 +320,9 @@ class App(Tk):
                     x[i] * App.TILE_SIZE + App.TILE_SIZE,
                     y[i] * App.TILE_SIZE + App.TILE_SIZE,
                     fill=App.COLOR_SNAKE_BODY
-                )  # Body
+                )
 
-            # iteration for all Apple instance
+            # iteration to display Apple instance
             for ii in range(len(self.__apple)):
                 self.__canvas.create_rectangle(
                     self.__apple[ii].x * App.TILE_SIZE,
@@ -329,12 +330,13 @@ class App(Tk):
                     self.__apple[ii].x * App.TILE_SIZE + App.TILE_SIZE,
                     self.__apple[ii].y * App.TILE_SIZE + App.TILE_SIZE,
                     fill=App.COLOR_APPLE
-                )  # Apple
-        else:  # GameOver Message
+                )
+        else:  # Game is over
             if not self.add_to_leaderboard_shown:
                 self.add_to_leaderboard_shown = True
                 self.total_game_time = time.time() - self.start_time
 
+                # Only add high score if name has been entered
                 if self.name != "None":
                     high_scores.append([self.id_number, self.name, self.__snake.points, self.__snake.length,
                                         self.total_game_time])
@@ -343,6 +345,7 @@ class App(Tk):
             self.__canvas.create_text(x, y - App.FONT_DISTANCE, fill=App.COLOR_FONT, font=App.FONT,
                                     text=App.TEXT_GAMEOVER)
 
+            # Display stats for if the user has entered name
             if self.name != "None":
                 self.__canvas.create_text(x, y + App.FONT_DISTANCE*2, fill=App.COLOR_FONT, font=App.FONT,
                                           text=App.TEXT_NAME + str(self.name))
@@ -364,6 +367,7 @@ class App(Tk):
 
     def enter_high_score(self, set_name_function, pause_function):
         self.entering_name = True
+        # Pass in the set name and pause functions so they can be called inside the new window
         enter_name_window = inputHighScoreWindow(self.master, set_name_function, pause_function)
 
     # get the state of pause
@@ -399,7 +403,7 @@ class App(Tk):
         self.__snake = Snake(self.__apple)
         self.bind('<KeyPress>', self.__snake.set_key_event)
         
-        # start the game
+        # Reset variables to start values
         self.__pause = True
         self.__starting = False
         self.enter_name_shown = False
@@ -414,9 +418,9 @@ class App(Tk):
             self.setPause()
         
         # create a new window for input
-        window = inputWindow(self,label={'width':App.BOARD_WIDTH,\
-                                            'height':App.BOARD_HEIGHT,
-                                            'tile':App.TILE_SIZE})
+        window = inputWindow(self, label={'width': App.BOARD_WIDTH,
+                                          'height': App.BOARD_HEIGHT,
+                                          'tile': App.TILE_SIZE})
         window.title('Please input the window size')
         window.transient(self)
         self.wait_window(window)
@@ -447,7 +451,6 @@ class App(Tk):
 
         # get input
         App.number_apple = int(window.output['number of apples'])
-
 
         if App.number_apple > before:
             # create new Apple instance

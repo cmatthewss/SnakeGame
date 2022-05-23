@@ -497,9 +497,9 @@ def leaderboard():
 
 root =Tk()
 root.title("Snake Main Menu")
-root.geometry('500x325')
-#img=PhotoImage(file='C:/Users/alexr/OneDrive - Loughborough University/Year 2/WSB301 - Software/Snake/background1.gif')
-#Label(root,image=img).pack()
+root.geometry('1000x650')
+img=PhotoImage(file='background1.gif')
+Label(root,image=img).pack()
 
 
 

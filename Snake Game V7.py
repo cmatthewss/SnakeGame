@@ -1,3 +1,4 @@
+from msilib.schema import Font
 import time
 import tkinter as tk
 from tkinter import Tk, ttk, StringVar, Toplevel
@@ -233,6 +234,7 @@ class App(Tk):
         self.__count_time = 3
 
 
+
     def mainloop(self, n=0):
         # menu
         self.__menu()
@@ -274,6 +276,9 @@ class App(Tk):
         self.after(App.TICK_RATE, self.__gameloop)
         self.__canvas.delete(ALL)
         self.__pause = self.pause
+
+        self.__canvas.create_text(50, 10, fill=App.COLOR_FONT, font=App.FONT,
+                                          text=self.name)
 
         if not self.__snake.gameover:
             # show the 'PAUSE' if stopping the game

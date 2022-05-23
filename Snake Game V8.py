@@ -476,10 +476,10 @@ def singleplayerwindow():
 
 
 def leaderboard():
-    tk.Button.destroy(start_button)
-    tk.Button.destroy(leaderboard_button)
+    root=Tk()
     root.configure(background=App.COLOR_BACKGROUND)
     root.title("Leaderboard")
+    root.geometry('300x300')
     label_leaderboard = tk.Label(root, text="Leaderboard", font=App.FONT, fg=App.COLOR_FONT)
     label_leaderboard.pack()
     label = tk.Label(root, text="Place:   Name   Apples", font=App.FONT, fg=App.COLOR_FONT)
@@ -491,10 +491,7 @@ def leaderboard():
         entry_text = f"{i+1}:\t {entry[1]}\t {entry[2]}"
         label = tk.Label(root, text=entry_text, font=App.FONT, fg=App.COLOR_FONT)
         label.pack()
-
-
-
-
+    
 
 
 

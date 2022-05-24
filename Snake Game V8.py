@@ -236,13 +236,13 @@ class App(Tk):
         # activate shortcut
         self.bind_all('<KeyPress>', self.shortcut)
 
-        # whether pause the game
+        # whether to pause the game
         self.__pause = False
-        # whether end pause and countdown
+        # whether to end pause and start countdown to continue
         self.__starting = False
-        # the countdown time
+        # the countdown time of 3 seconds
         self.__count_time = 3
-
+        # Button on Screen to Start / Pause the game easily
         self.start_button = Button(self, text="Start / Pause", command=self.setPause)
         self.start_button.pack(side='bottom')
 
@@ -253,7 +253,7 @@ class App(Tk):
         self.__gameloop()
         Tk.mainloop(self, n)
     
-    def __menu(self):
+    def __menu(self): # Create a Top menu bar with options and settings
         menubar = Menu(self)
         # menu 1: HOME
         menu1 = Menu(self, tearoff=0)
@@ -275,8 +275,10 @@ class App(Tk):
     def __gameloop(self):
         self.after(App.TICK_RATE, self.__gameloop)
         self.__canvas.delete(ALL)
+        #Set Game as Paused from the Start so user has to initiate the start
         self.__pause = self.pause
 
+        # Display the Users Name/ID in the top corner of the game
         x, y = self.get_screen_center()
         self.__canvas.create_text(50, 10, fill=App.COLOR_FONT, font=App.FONT,
                                   text=self.name)
@@ -357,16 +359,16 @@ class App(Tk):
 
             # Display stats for if the user has entered name
             if self.name != "None":
-                self.__canvas.create_text(x, y + App.FONT_DISTANCE*2, fill=App.COLOR_FONT, font=App.FONT,
+                self.__canvas.create_text(x, y + App.FONT_DISTANCE*2, fill=App.COLOR_FONT, font=App.FONT, # Display users name
                                           text=App.TEXT_NAME + str(self.name))
 
-                self.__canvas.create_text(x, y + App.FONT_DISTANCE*3, fill=App.COLOR_FONT, font=App.FONT,
+                self.__canvas.create_text(x, y + App.FONT_DISTANCE*3, fill=App.COLOR_FONT, font=App.FONT, # Display users Full Snake Length
                                           text=App.TEXT_SNAKE_LENGTH + str(self.__snake.length))
 
-                self.__canvas.create_text(x, y + App.FONT_DISTANCE * 4, fill=App.COLOR_FONT, font=App.FONT,
+                self.__canvas.create_text(x, y + App.FONT_DISTANCE * 4, fill=App.COLOR_FONT, font=App.FONT, # Display users game time in Seconds
                                           text=App.TEXT_TIME_ELAPSED + str(abs(int(self.total_game_time))) + "s")
 
-            self.__canvas.create_text(x, y + App.FONT_DISTANCE*5, fill=App.COLOR_FONT, font=App.FONT,
+            self.__canvas.create_text(x, y + App.FONT_DISTANCE*5, fill=App.COLOR_FONT, font=App.FONT, # Display users End Points
                                     text=App.TEXT_POINTS + str(self.__snake.points))
 
     # get the screen center for showing message
@@ -385,6 +387,7 @@ class App(Tk):
     def pause(self) -> bool:
         return self.__pause
 
+    # Save Users details to use for high score
     def set_current_user(self, id, name):
         self.id_number = id
         self.name = name
@@ -471,21 +474,21 @@ class App(Tk):
         self.__snake.__apple = self.__apple
         self.setPause()
 
-    # shortcut event
+    # Set shortcuts for Keys
     def shortcut(self, event):
-            if (event.char == 'p') | (event.char == 'P'):
+            if (event.char == 'p') | (event.char == 'P'): # p to pause the game
                 self.setPause()
-            if (event.char == 'o') | (event.char == 'O'):
+            if (event.char == 'o') | (event.char == 'O'): # o to set window size
                 self.setWindowSize()
-            if (event.char == 'n') | (event.char == 'N'):
+            if (event.char == 'n') | (event.char == 'N'): # n to set apple numbers
                 self.setAppleNumber()
 
 
-def Play2():
+def Play2(): # Start App from Main screen
     App().mainloop()
 
 
-def leaderboard():
+def leaderboard(): # Create a new window to display leaderboard
     root=Tk()
     root.configure(background=App.COLOR_BACKGROUND)
     root.title("Leaderboard")
@@ -494,9 +497,9 @@ def leaderboard():
     label_leaderboard.pack()
     label = tk.Label(root, text="Place:   Name   Apples", font=App.FONT, fg=App.COLOR_FONT)
     label.pack()
-    sorted_list = list(reversed(sorted(high_scores, key=lambda entry: entry[2])))
+    sorted_list = list(reversed(sorted(high_scores, key=lambda entry: entry[2]))) # Sort scores for leaderboard
 
-    for i in range(min(len(sorted_list), 10)):
+    for i in range(min(len(sorted_list), 10)): # Display Top 10 for Name and Number of Apples
         entry = sorted_list[i]
         entry_text = f"{i+1}:\t {entry[1]}\t {entry[2]}"
         label = tk.Label(root, text=entry_text, font=App.FONT, fg=App.COLOR_FONT)
@@ -504,11 +507,11 @@ def leaderboard():
     
 
 
-
+# Main Screen To select to play or to view leaderboard.
 root =Tk()
 root.title("Snake Main Menu")
 root.geometry('1000x650')
-img=PhotoImage(file='background1.gif')
+img=PhotoImage(file='background1.gif') # Image to improve Gui Look
 Label(root,image=img).pack()
 
 
@@ -518,7 +521,7 @@ leaderboard_button.pack(side='bottom')
 start_button = tk.Button(root, bg = 'yellowgreen', text='Single Player', width=25, command=Play2, font=(App.FONT, 48))
 start_button.pack(side='bottom')
 
-class inputHighScoreWindow(object):
+class inputHighScoreWindow(object): # Open Window to input Name before playing game to save for leaderboard.
     def __init__(self, master, set_current_user, pause_function):
         top = self.top = Toplevel(master)
         top.geometry("350x150+320+280")

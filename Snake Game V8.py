@@ -1,10 +1,17 @@
-from msilib.schema import Font
+import time
+import random
 import time
 import tkinter as tk
-from tkinter import Tk, ttk, StringVar, Toplevel
 from tkinter import *
-import random
+from tkinter import ttk
 from typing import List
+
+from pygame import mixer
+
+mixer.init()  # SOUND EFFECT ADDED WHEN EATING APPLE
+mixer.music.load( "title-screen.mid" )  # SET TO CORRECT FOLDER
+mixer.music.set_volume( 0.7 )  # CHANGE VOLUME
+mixer.music.play(loops=-1)   #loop forever
 
 #making list of highscores
 high_scores = []
@@ -79,6 +86,9 @@ class Snake:
 
                 self.__points = self.__points + 1
                 __apple.create_new_apple()
+
+                sound1 = mixer.Sound("sound_effect_1.wav")  # SOUND EFFECT
+                mixer.find_channel(True).play(sound1)
 
     @property
     def gameover(self) -> bool:

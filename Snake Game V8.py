@@ -8,7 +8,7 @@ from typing import List
 
 from pygame import mixer
 
-mixer.init()  # SOUND EFFECT ADDED WHEN EATING APPLE
+mixer.init()  # SOUND EFFECT FOR BACKGROUND MUSIC
 mixer.music.load( "title-screen.mid" )  # SET TO CORRECT FOLDER
 mixer.music.set_volume( 0.7 )  # CHANGE VOLUME
 mixer.music.play(loops=-1)   #loop forever
@@ -87,7 +87,7 @@ class Snake:
                 self.__points = self.__points + 1
                 __apple.create_new_apple()
 
-                sound1 = mixer.Sound("sound_effect_1.wav")  # SOUND EFFECT
+                sound1 = mixer.Sound("sound_effect_1.wav")  # SOUND EFFECT ADDED WHEN EATING APPLE
                 mixer.find_channel(True).play(sound1)
 
     @property
